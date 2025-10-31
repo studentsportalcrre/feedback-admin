@@ -1,0 +1,117 @@
+/* ======== Feedback Admin Panel Styling ======== */
+
+body {
+  background-color: #f3f6fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- Container ---------- */
+.container {
+  max-width: 950px;
+  background: #ffffff;
+  margin: 50px auto;
+  padding: 35px 40px;
+  border-radius: 15px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Heading ---------- */
+h3 {
+  text-align: center;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 25px;
+}
+
+h5 {
+  text-align: center;
+  margin-top: 40px;
+  color: #34495e;
+}
+
+/* ---------- Form ---------- */
+form label {
+  font-weight: 500;
+  color: #444;
+}
+
+form .form-control {
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+}
+
+form .form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+}
+
+/* ---------- Button ---------- */
+button.btn {
+  border-radius: 25px;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+button.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Table ---------- */
+table {
+  width: 100%;
+  margin-top: 25px;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+table thead {
+  background-color: #007bff;
+  color: #fff;
+  font-weight: 600;
+}
+
+table th,
+table td {
+  padding: 10px 12px;
+  border: 1px solid #dee2e6;
+}
+
+table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+table tr:hover {
+  background-color: #e9f5ff;
+  transition: 0.2s ease;
+}
+
+/* ---------- SweetAlert overrides ---------- */
+.swal2-title {
+  font-size: 1.3rem !important;
+  font-weight: 600 !important;
+}
+
+.swal2-confirm {
+  border-radius: 20px !important;
+  padding: 8px 20px !important;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .container {
+    padding: 25px;
+  }
+  h3 {
+    font-size: 1.4rem;
+  }
+  table th,
+  table td {
+    font-size: 0.9rem;
+  }
+}
