@@ -772,7 +772,7 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     // =====================================================
     const footerY = pageHeight - 55;
     doc.font("Helvetica").fontSize(8).fillColor("gray")
-      .text(`Generated on: ${moment().format("DD-MM-YYYY HH:mm:ss")}`, 50, footerY, { align: "left" });
+      .text(`Generated on: ${moment().format("DD-MM-YYYY")}`, 50, footerY, { align: "left" });
     doc.font("Helvetica-Bold").fillColor("gray")
       .text("Designed & Developed by CSE - Cyber Security(23-27)", -50, footerY, { align: "right" });
 
