@@ -505,9 +505,6 @@ app.get("/admin/download-feedback-branch-report", async (req, res) => {
 });
 
 
-
-
-
 // ============================================
 // 📘 Get Faculty Names (Dynamic Based on Filters)
 // ============================================
@@ -538,7 +535,7 @@ app.get("/admin/get-faculty-names", async (req, res) => {
 
 // ============================================
 // 📘 OFFICIAL FACULTY-WISE FEEDBACK REPORT
-// (Final Layout v18 – Adjusted Header Font, Balanced Layout, Bright Watermark)
+// (Final Layout v19 – Added Subject Name Display)
 // ============================================
 app.get("/admin/download-feedback-faculty-report", async (req, res) => {
   const { faculty_name, course, branch, year, semester, section } = req.query;
@@ -558,9 +555,9 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     );
     const academic_year = ayResult?.[0]?.academic_year || "N/A";
 
-    // ---------------- Fetch Responses ----------------
+    // ---------------- Fetch Responses (with subname) ----------------
     const [rows] = await pool.promise().query(
-      `SELECT reg_no, question_no, response 
+      `SELECT reg_no, question_no, response, subname
        FROM feedback_responses
        WHERE faculty_name = ? AND course = ? AND branch = ? AND year = ? AND semester = ? AND section = ?
        ORDER BY question_no ASC`,
@@ -570,6 +567,9 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     if (!rows.length) {
       return res.status(404).send("No feedback responses found for the selected faculty.");
     }
+
+    // ---------------- Extract Subject Name ----------------
+    const subname = rows[0]?.subname || "N/A";
 
     // ---------------- Total Students ----------------
     const uniqueStudents = new Set(rows.map(r => r.reg_no));
@@ -638,14 +638,13 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     const pageHeight = doc.page.height;
 
     // =====================================================
-    // 🏛️ HEADER SECTION (Adjusted Font Sizes & Alignment)
+    // 🏛️ HEADER SECTION
     // =====================================================
     const headerLogoPath = path.join(__dirname, "public", "college_logo.png");
     if (fs.existsSync(headerLogoPath)) {
-      doc.image(headerLogoPath, 55, 40, { width: 50 }); // slightly smaller logo
+      doc.image(headerLogoPath, 55, 40, { width: 50 });
     }
 
-    // Adjusted font sizes to avoid overlap
     doc.font("Helvetica-Bold").fontSize(17).fillColor(COLOR_PRIMARY)
       .text("SIR C.R. REDDY COLLEGE OF ENGINEERING", 40, 40, { align: "center" });
     doc.font("Helvetica").fontSize(11).fillColor(COLOR_TEXT)
@@ -654,13 +653,12 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
       .text("Accredited by NAAC with 'A' Grade | NBA Accredited", { align: "center" })
       .text("Eluru, Andhra Pradesh - 534007", { align: "center" });
 
-    // ---------------- DOUBLE LINE ----------------
     let currentY = doc.y + 8;
     doc.strokeColor(COLOR_PRIMARY).lineWidth(1.2).moveTo(50, currentY).lineTo(545, currentY).stroke();
     doc.lineWidth(0.8).moveTo(50, currentY + 3).lineTo(545, currentY + 3).stroke();
 
     // =====================================================
-    // 🌈 WATERMARK BACKGROUND (Enhanced Brightness)
+    // 🌈 WATERMARK
     // =====================================================
     const bgLogoPath = path.join(__dirname, "public", "college_logo.png");
     if (fs.existsSync(bgLogoPath)) {
@@ -691,11 +689,11 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
       .text("FACULTY-WISE CONSOLIDATED FEEDBACK REPORT", { align: "center" });
 
     // =====================================================
-    // 🧾 INFO BOX
+    // 🧾 INFO BOX (Added Subject Name)
     // =====================================================
     doc.moveDown(1);
     currentY = doc.y;
-    const boxHeight = 75;
+    const boxHeight = 90; // slightly increased for subname
     doc.roundedRect(50, currentY, 500, boxHeight, 6)
       .strokeColor(COLOR_ACCENT).lineWidth(1).stroke();
     doc.font("Helvetica-Bold").fontSize(10).fillColor(COLOR_ACCENT);
@@ -707,6 +705,7 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     doc.text(`Branch : ${branch}`, rightX, currentY + 29);
     doc.text(`Year : ${year}`, leftX, currentY + 46);
     doc.text(`Semester : ${semester} | Section : ${section}`, rightX, currentY + 46);
+    doc.text(`Subject Name : ${subname}`, leftX, currentY + 63); // ✅ Added subject line
 
     currentY += boxHeight + 30;
 
@@ -719,7 +718,6 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     const startX = 50;
     const rowHeight = 22;
 
-    // Header Row
     doc.font("Helvetica-Bold").fontSize(10).fillColor(COLOR_PRIMARY);
     let xPos = startX;
     headers.forEach((header, i) => {
@@ -729,7 +727,6 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     doc.strokeColor("#999").rect(startX, currentY, totalWidth, rowHeight).stroke();
     currentY += rowHeight;
 
-    // Data Rows
     doc.font("Helvetica").fontSize(9).fillColor(COLOR_TEXT);
     questionData.forEach((item) => {
       let x = startX;
@@ -785,8 +782,6 @@ app.get("/admin/download-feedback-faculty-report", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
-
 
 // ✅ Get all questions
 app.get("/admin/questions", (req, res) => {
