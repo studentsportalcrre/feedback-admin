@@ -266,12 +266,12 @@
             <option value="">Select Section</option>
           </select>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Faculty Name</label>
-          <select class="form-select" id="faculty_name" required>
-            <option value="">Select Faculty</option>
-          </select>
-        </div>
+<div class="col-md-4">
+  <label class="form-label">Subject Name</label>
+  <select class="form-select" id="faculty_subname" required>
+    <option value="">Select Subject</option>
+  </select>
+</div>
       </div>
       <button type="submit" class="btn btn-success w-100 mt-4">
         ⬇ Download Faculty Feedback Report
@@ -345,64 +345,65 @@
       window.open(url, "_blank");
     });
 
-    // ✅ Load Faculty Names Dynamically
-    async function loadFacultyNames() {
-      const course = document.getElementById("faculty_course").value;
-      const branch = document.getElementById("faculty_branch").value;
-      const year = document.getElementById("faculty_year").value;
-      const semester = document.getElementById("faculty_semester").value;
-      const section = document.getElementById("faculty_section").value;
+async function loadSubjectNames() {
+  const course = document.getElementById("faculty_course").value;
+  const branch = document.getElementById("faculty_branch").value;
+  const year = document.getElementById("faculty_year").value;
+  const semester = document.getElementById("faculty_semester").value;
+  const section = document.getElementById("faculty_section").value;
 
-      if (!course || !branch || !year || !semester || !section) return;
+  if (!course || !branch || !year || !semester || !section) return;
 
-      const facultySelect = document.getElementById("faculty_name");
-      facultySelect.innerHTML = '<option>Loading...</option>';
+  const subjectSelect = document.getElementById("faculty_subname");
+  subjectSelect.innerHTML = '<option>Loading...</option>';
 
-      try {
-        const url = `${API_BASE}/admin/get-faculty-names?course=${encodeURIComponent(course)}&branch=${encodeURIComponent(branch)}&year=${encodeURIComponent(year)}&semester=${encodeURIComponent(semester)}&section=${encodeURIComponent(section)}`;
-        const res = await fetch(url);
-        const data = await res.json();
+  try {
+    const url = `${API_BASE}/admin/get-subject-names?course=${encodeURIComponent(course)}&branch=${encodeURIComponent(branch)}&year=${encodeURIComponent(year)}&semester=${encodeURIComponent(semester)}&section=${encodeURIComponent(section)}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-        if (res.ok && data.length) {
-          facultySelect.innerHTML = '<option value="">Select Faculty</option>';
-          data.forEach((name) => {
-            const opt = document.createElement("option");
-            opt.value = name;
-            opt.textContent = name;
-            facultySelect.appendChild(opt);
-          });
-        } else {
-          facultySelect.innerHTML = '<option>No faculty found</option>';
-        }
-      } catch (err) {
-        console.error(err);
-        facultySelect.innerHTML = '<option>Error loading faculty</option>';
-      }
+    if (res.ok && data.length) {
+      subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+      data.forEach((sub) => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.textContent = sub;
+        subjectSelect.appendChild(opt);
+      });
+    } else {
+      subjectSelect.innerHTML = '<option>No subjects found</option>';
     }
+  } catch (err) {
+    console.error(err);
+    subjectSelect.innerHTML = '<option>Error loading subjects</option>';
+  }
+}
 
     // ✅ When any faculty dropdown changes → reload faculty list
-    ["faculty_course", "faculty_branch", "faculty_year", "faculty_semester", "faculty_section"].forEach(id => {
-      document.getElementById(id).addEventListener("change", loadFacultyNames);
-    });
+["faculty_course", "faculty_branch", "faculty_year", "faculty_semester", "faculty_section"].forEach(id => {
+  document.getElementById(id).addEventListener("change", loadSubjectNames);
+});
+
 
     // ✅ Submit faculty report form
-    document.getElementById("facultyReportForm").addEventListener("submit", (e) => {
-      e.preventDefault();
+document.getElementById("facultyReportForm").addEventListener("submit", (e) => {
+  e.preventDefault();
 
-      const course = document.getElementById("faculty_course").value;
-      const branch = document.getElementById("faculty_branch").value;
-      const year = document.getElementById("faculty_year").value;
-      const semester = document.getElementById("faculty_semester").value;
-      const section = document.getElementById("faculty_section").value;
-      const faculty_name = document.getElementById("faculty_name").value;
+  const course = document.getElementById("faculty_course").value;
+  const branch = document.getElementById("faculty_branch").value;
+  const year = document.getElementById("faculty_year").value;
+  const semester = document.getElementById("faculty_semester").value;
+  const section = document.getElementById("faculty_section").value;
+  const subname = document.getElementById("faculty_subname").value;
 
-      if (!course || !branch || !year || !semester || !section || !faculty_name) {
-        return Swal.fire("⚠ Missing Fields", "Please fill all fields before downloading.", "warning");
-      }
+  if (!course || !branch || !year || !semester || !section || !subname) {
+    return Swal.fire("⚠ Missing Fields", "Please fill all fields before downloading.", "warning");
+  }
 
-      const url = `${API_BASE}/admin/download-feedback-faculty-report?course=${encodeURIComponent(course)}&branch=${encodeURIComponent(branch)}&year=${encodeURIComponent(year)}&semester=${encodeURIComponent(semester)}&section=${encodeURIComponent(section)}&faculty_name=${encodeURIComponent(faculty_name)}`;
-      window.open(url, "_blank");
-    });
+  const url = `${API_BASE}/admin/download-feedback-subject-report?course=${encodeURIComponent(course)}&branch=${encodeURIComponent(branch)}&year=${encodeURIComponent(year)}&semester=${encodeURIComponent(semester)}&section=${encodeURIComponent(section)}&subname=${encodeURIComponent(subname)}`;
+  window.open(url, "_blank");
+});
+
 
     // ✅ Initial load
     loadDropdowns();
