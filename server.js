@@ -506,9 +506,9 @@ app.get("/admin/download-feedback-branch-report", async (req, res) => {
 
 
 // ============================================
-// 📘 Get Faculty Names (Dynamic Based on Filters)
+// 📘 Get Subject Names (Dynamic Based on Filters)
 // ============================================
-app.get("/admin/get-faculty-names", async (req, res) => {
+app.get("/admin/get-subject-names", async (req, res) => {
   const { course, branch, year, semester, section } = req.query;
 
   if (!course || !branch || !year || !semester || !section) {
@@ -517,55 +517,58 @@ app.get("/admin/get-faculty-names", async (req, res) => {
 
   try {
     const [rows] = await pool.promise().query(
-      `SELECT DISTINCT faculty_name 
+      `SELECT DISTINCT subname 
        FROM feedback_responses
        WHERE course = ? AND branch = ? AND year = ? AND semester = ? AND section = ?
-       AND faculty_name IS NOT NULL AND faculty_name != ''
-       ORDER BY faculty_name ASC`,
+       AND subname IS NOT NULL AND subname != ''
+       ORDER BY subname ASC`,
       [course, branch, year, semester, section]
     );
 
-    const facultyNames = rows.map(r => r.faculty_name);
-    res.json(facultyNames);
+    const subjectNames = rows.map(r => r.subname);
+    res.json(subjectNames);
   } catch (err) {
-    console.error("Error fetching faculty names:", err);
+    console.error("Error fetching subject names:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-// ============================================
-// 📘 OFFICIAL FACULTY-WISE FEEDBACK REPORT
-// (Final Layout v19 – Added Subject Name Display)
-// ============================================
-app.get("/admin/download-feedback-faculty-report", async (req, res) => {
-  const { faculty_name, course, branch, year, semester, section } = req.query;
 
-  if (!faculty_name || !course || !branch || !year || !semester || !section) {
+// ============================================
+// 📘 OFFICIAL SUBJECT-WISE FEEDBACK REPORT
+// (Same as faculty report but filtered by subname)
+// ============================================
+app.get("/admin/download-feedback-subject-report", async (req, res) => {
+  const { subname, course, branch, year, semester, section } = req.query;
+
+  if (!subname || !course || !branch || !year || !semester || !section) {
     return res.status(400).send("Missing required parameters");
   }
 
   try {
-    // ---------------- Fetch Academic Year ----------------
-    const [ayResult] = await pool.promise().query(
-      `SELECT academic_year 
-       FROM feedback_subject_allocation 
-       WHERE faculty_name = ? AND course = ? AND branch = ? AND year = ? AND semester = ? AND section = ?
+    // 🔍 Get Faculty Name & Academic Year for this subject
+    const [meta] = await pool.promise().query(
+      `SELECT faculty_name, academic_year 
+       FROM feedback_subject_allocation
+       WHERE subname = ? AND course = ? AND branch = ? AND year = ? AND semester = ? AND section = ?
        LIMIT 1`,
-      [faculty_name, course, branch, year, semester, section]
+      [subname, course, branch, year, semester, section]
     );
-    const academic_year = ayResult?.[0]?.academic_year || "N/A";
 
-    // ---------------- Fetch Responses (with subname) ----------------
+    const faculty_name = meta?.[0]?.faculty_name || "N/A";
+    const academic_year = meta?.[0]?.academic_year || "N/A";
+
+    // 🔍 Fetch responses
     const [rows] = await pool.promise().query(
-      `SELECT reg_no, question_no, response, subname
+      `SELECT reg_no, question_no, response
        FROM feedback_responses
-       WHERE faculty_name = ? AND course = ? AND branch = ? AND year = ? AND semester = ? AND section = ?
+       WHERE subname = ? AND course = ? AND branch = ? AND year = ? AND semester = ? AND section = ?
        ORDER BY question_no ASC`,
-      [faculty_name, course, branch, year, semester, section]
+      [subname, course, branch, year, semester, section]
     );
 
     if (!rows.length) {
-      return res.status(404).send("No feedback responses found for the selected faculty.");
+      return res.status(404).send("No feedback responses found for this subject.");
     }
 
     // ---------------- Extract Subject Name ----------------
