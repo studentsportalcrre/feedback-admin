@@ -625,7 +625,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
 
     // ---------------- PDF Setup ----------------
     const doc = new PDFDocument({ margin: 35, size: "A4" });
-    const filename = `Subject_Report_${subjectName.replace(/\s+/g, "_")}_${moment().format("YYYYMMDD_HHmmss")}.pdf`;
+    const filename = `Subject_Report_${subname.replace(/\s+/g, "_")}_${branch.replace(/\s+/g, "_")}_${year}_Year_${semester}_Sem_${section}_${faculty_name.replace(/\s+/g, "_")}_${moment().format("YYYYMMDD")}.pdf`;
 
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.setHeader("Content-Type", "application/pdf");
