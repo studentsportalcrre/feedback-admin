@@ -557,6 +557,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
 
     const faculty_name = meta?.[0]?.faculty_name || "N/A";
     const academic_year = meta?.[0]?.academic_year || "N/A";
+    const subjectName = subname || "N/A";
 
     // 🔍 Fetch responses
     const [rows] = await pool.promise().query(
@@ -570,9 +571,6 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     if (!rows.length) {
       return res.status(404).send("No feedback responses found for this subject.");
     }
-
-    // ---------------- Extract Subject Name ----------------
-    const subname = rows[0]?.subname || "N/A";
 
     // ---------------- Total Students ----------------
     const uniqueStudents = new Set(rows.map(r => r.reg_no));
@@ -627,7 +625,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
 
     // ---------------- PDF Setup ----------------
     const doc = new PDFDocument({ margin: 35, size: "A4" });
-    const filename = `Faculty_Report_${faculty_name.replace(/\s+/g, "_")}_${moment().format("YYYYMMDD_HHmmss")}.pdf`;
+    const filename = `Subject_Report_${subjectName.replace(/\s+/g, "_")}_${moment().format("YYYYMMDD_HHmmss")}.pdf`;
 
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.setHeader("Content-Type", "application/pdf");
@@ -689,14 +687,14 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     // =====================================================
     doc.moveDown(1.3);
     doc.font("Helvetica-Bold").fontSize(13).fillColor(COLOR_ACCENT)
-      .text("FACULTY-WISE CONSOLIDATED FEEDBACK REPORT", { align: "center" });
+      .text("SUBJECT-WISE CONSOLIDATED FEEDBACK REPORT", { align: "center" });
 
     // =====================================================
-    // 🧾 INFO BOX (Added Subject Name)
+    // 🧾 INFO BOX
     // =====================================================
     doc.moveDown(1);
     currentY = doc.y;
-    const boxHeight = 90; // slightly increased for subname
+    const boxHeight = 90;
     doc.roundedRect(50, currentY, 500, boxHeight, 6)
       .strokeColor(COLOR_ACCENT).lineWidth(1).stroke();
     doc.font("Helvetica-Bold").fontSize(10).fillColor(COLOR_ACCENT);
@@ -708,7 +706,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     doc.text(`Branch : ${branch}`, rightX, currentY + 29);
     doc.text(`Year : ${year}`, leftX, currentY + 46);
     doc.text(`Semester : ${semester} | Section : ${section}`, rightX, currentY + 46);
-    doc.text(`Subject Name : ${subname}`, leftX, currentY + 63); // ✅ Added subject line
+    doc.text(`Subject Name : ${subjectName}`, leftX, currentY + 63);
 
     currentY += boxHeight + 30;
 
@@ -781,10 +779,11 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
 
     doc.end();
   } catch (err) {
-    console.error("❌ Faculty Report Error:", err);
+    console.error("❌ Subject Report Error:", err);
     res.status(500).send("Internal Server Error");
   }
 });
+
 
 // ✅ Get all questions
 app.get("/admin/questions", (req, res) => {
