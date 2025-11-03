@@ -481,7 +481,7 @@ app.get("/admin/download-feedback-branch-report", async (req, res) => {
       .text("Principal", 0, signY, { align: "right", width: pageWidth - 80 });
 
     const footerY = pageHeight - 50;
-    const generatedText = `Generated on: ${moment().format("DD-MM-YYYY HH:mm:ss")}`;
+    const generatedText = `Generated on: ${moment().format("DD-MM-YYYY")}`;
     const devText = "Designed & Developed by DEPT OF CSE - Cyber Security(23-27)";
 
     doc
