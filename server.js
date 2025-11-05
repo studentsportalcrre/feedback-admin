@@ -504,7 +504,6 @@ app.get("/admin/download-feedback-branch-report", async (req, res) => {
   }
 });
 
-
 // ============================================
 // 📘 Get Subject Names (Dynamic Based on Filters)
 // ============================================
@@ -536,7 +535,7 @@ app.get("/admin/get-subject-names", async (req, res) => {
 
 // ============================================
 // 📘 OFFICIAL SUBJECT-WISE FEEDBACK REPORT
-// (Same as faculty report but filtered by subname)
+// (Professional layout + metadata order update)
 // ============================================
 app.get("/admin/download-feedback-subject-report", async (req, res) => {
   const { subname, course, branch, year, semester, section } = req.query;
@@ -546,7 +545,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
   }
 
   try {
-    // 🔍 Get Faculty Name & Academic Year for this subject
+    // 🔍 Get Faculty & Academic Year
     const [meta] = await pool.promise().query(
       `SELECT faculty_name, academic_year 
        FROM feedback_subject_allocation
@@ -576,7 +575,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     const uniqueStudents = new Set(rows.map(r => r.reg_no));
     const totalStudents = uniqueStudents.size;
 
-    // ---------------- Fetch Questions ----------------
+    // ---------------- Questions ----------------
     const [questions] = await pool.promise().query(
       `SELECT question_number, question FROM questions ORDER BY question_number ASC`
     );
@@ -584,24 +583,21 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     questions.forEach(q => (questionTextMap[q.question_number] = q.question));
 
     // ---------------- Scoring ----------------
-    const responseToScore = (r) => {
-      switch (r) {
-        case "Excellent": return 4;
-        case "Very Good": return 3;
-        case "Good": return 2;
-        case "Average": return 1;
-        case "Needs Improvement": return 0;
-        default: return 0;
-      }
-    };
+    const responseToScore = (r) => ({
+      "Excellent": 4,
+      "Very Good": 3,
+      "Good": 2,
+      "Average": 1,
+      "Needs Improvement": 0
+    }[r] ?? 0);
 
     const questionMap = {};
-    rows.forEach((r) => {
+    rows.forEach(r => {
       if (!questionMap[r.question_no]) questionMap[r.question_no] = [];
       questionMap[r.question_no].push(responseToScore(r.response));
     });
 
-    const questionData = Object.keys(questionMap).map((q) => {
+    const questionData = Object.keys(questionMap).map(q => {
       const scores = questionMap[q];
       const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
       const percentage = ((avgScore / 4) * 100).toFixed(2);
@@ -623,9 +619,11 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
       overallPercentage >= 70 ? "Good" :
       overallPercentage >= 60 ? "Average" : "Needs Improvement";
 
-    // ---------------- PDF Setup ----------------
+    // =====================================================
+    // 📄 PDF GENERATION
+    // =====================================================
     const doc = new PDFDocument({ margin: 35, size: "A4" });
-    const filename = `Subject_Report_${subname.replace(/\s+/g, "_")}_${branch.replace(/\s+/g, "_")}_${year}_Year_${semester}_Sem_${section}_${faculty_name.replace(/\s+/g, "_")}_${moment().format("YYYYMMDD")}.pdf`;
+    const filename = `Subject_Report_${subname.replace(/\s+/g, "_")}_${branch.replace(/\s+/g, "_")}_${year}_Year_${semester}_Sem_${section}_${moment().format("YYYYMMDD")}.pdf`;
 
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.setHeader("Content-Type", "application/pdf");
@@ -634,17 +632,14 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     const COLOR_PRIMARY = "#0b2e59";
     const COLOR_ACCENT = "#102c57";
     const COLOR_TEXT = "#000";
-
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
 
     // =====================================================
-    // 🏛️ HEADER SECTION
+    // 🏛️ HEADER
     // =====================================================
-    const headerLogoPath = path.join(__dirname, "public", "college_logo.png");
-    if (fs.existsSync(headerLogoPath)) {
-      doc.image(headerLogoPath, 55, 40, { width: 50 });
-    }
+    const headerLogo = path.join(__dirname, "public", "college_logo.png");
+    if (fs.existsSync(headerLogo)) doc.image(headerLogo, 55, 40, { width: 50 });
 
     doc.font("Helvetica-Bold").fontSize(17).fillColor(COLOR_PRIMARY)
       .text("SIR C.R. REDDY COLLEGE OF ENGINEERING", 40, 40, { align: "center" });
@@ -661,15 +656,12 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     // =====================================================
     // 🌈 WATERMARK
     // =====================================================
-    const bgLogoPath = path.join(__dirname, "public", "college_logo.png");
-    if (fs.existsSync(bgLogoPath)) {
+    const bgLogo = path.join(__dirname, "public", "college_logo.png");
+    if (fs.existsSync(bgLogo)) {
       doc.save();
       doc.opacity(0.18);
-      const imgWidth = 320;
-      const imgHeight = 320;
-      const centerX = (pageWidth - imgWidth) / 2;
-      const centerY = (pageHeight - imgHeight) / 2;
-      doc.image(bgLogoPath, centerX, centerY, { width: imgWidth, height: imgHeight });
+      const imgWidth = 320, imgHeight = 320;
+      doc.image(bgLogo, (pageWidth - imgWidth) / 2, (pageHeight - imgHeight) / 2, { width: imgWidth });
       doc.restore();
       doc.opacity(1);
     }
@@ -683,30 +675,30 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
       .stroke();
 
     // =====================================================
-    // 📋 TITLE SECTION
+    // 📋 TITLE
     // =====================================================
     doc.moveDown(1.3);
     doc.font("Helvetica-Bold").fontSize(13).fillColor(COLOR_ACCENT)
       .text("SUBJECT-WISE CONSOLIDATED FEEDBACK REPORT", { align: "center" });
 
     // =====================================================
-    // 🧾 INFO BOX
+    // 🧾 INFO BOX (updated order)
     // =====================================================
     doc.moveDown(1);
     currentY = doc.y;
-    const boxHeight = 90;
+    const boxHeight = 95;
     doc.roundedRect(50, currentY, 500, boxHeight, 6)
       .strokeColor(COLOR_ACCENT).lineWidth(1).stroke();
-    doc.font("Helvetica-Bold").fontSize(10).fillColor(COLOR_ACCENT);
 
     const leftX = 65, rightX = 320;
-    doc.text(`Faculty Name : ${faculty_name}`, leftX, currentY + 12);
-    doc.text(`Academic Year : ${academic_year}`, rightX, currentY + 12);
-    doc.text(`Course : ${course}`, leftX, currentY + 29);
-    doc.text(`Branch : ${branch}`, rightX, currentY + 29);
-    doc.text(`Year : ${year}`, leftX, currentY + 46);
-    doc.text(`Semester : ${semester} | Section : ${section}`, rightX, currentY + 46);
-    doc.text(`Subject Name : ${subjectName}`, leftX, currentY + 63);
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(COLOR_ACCENT);
+    doc.text(`Course : ${course}`, leftX, currentY + 12);
+    doc.text(`Branch : ${branch}`, rightX, currentY + 12);
+    doc.text(`Year : ${year}`, leftX, currentY + 29);
+    doc.text(`Semester : ${semester} | Section : ${section}`, rightX, currentY + 29);
+    doc.text(`Subject Name : ${subjectName}`, leftX, currentY + 46);
+    doc.text(`Faculty Name : ${faculty_name}`, rightX, currentY + 46);
+    doc.text(`Academic Year : ${academic_year}`, leftX, currentY + 63);
 
     currentY += boxHeight + 30;
 
@@ -716,8 +708,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     const headers = ["Q.No", "Question", "Avg", "%"];
     const colWidths = [45, 290, 70, 75];
     const totalWidth = colWidths.reduce((a, b) => a + b, 0);
-    const startX = 50;
-    const rowHeight = 22;
+    const startX = 50, rowHeight = 22;
 
     doc.font("Helvetica-Bold").fontSize(10).fillColor(COLOR_PRIMARY);
     let xPos = startX;
@@ -729,7 +720,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     currentY += rowHeight;
 
     doc.font("Helvetica").fontSize(9).fillColor(COLOR_TEXT);
-    questionData.forEach((item) => {
+    questionData.forEach(item => {
       let x = startX;
       const textHeight = doc.heightOfString(item.question_text, { width: colWidths[1] - 6 });
       const dynamicHeight = Math.max(rowHeight, textHeight + 8);
@@ -751,11 +742,11 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     });
 
     // =====================================================
-    // 📈 SUMMARY SECTION
+    // 📈 SUMMARY
     // =====================================================
     currentY += 25;
     doc.font("Helvetica-Bold").fontSize(11).fillColor(COLOR_ACCENT);
-    doc.text(`Total Students Responded : ${totalStudents}`, 60, currentY, { align: "left" });
+    doc.text(`Total Students Responded : ${totalStudents}`, 60, currentY);
     doc.text(`Overall Percentage : ${overallPercentage}%`, -60, currentY, { align: "right" });
     currentY += 16;
     doc.text(`Overall Grade : ${overallGrade}`, -60, currentY, { align: "right" });
@@ -775,7 +766,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     doc.font("Helvetica").fontSize(8).fillColor("gray")
       .text(`Generated on: ${moment().format("DD-MM-YYYY")}`, 50, footerY, { align: "left" });
     doc.font("Helvetica-Bold").fillColor("gray")
-      .text("Designed & Developed by CSE - Cyber Security(23-27)", -50, footerY, { align: "right" });
+      .text("Designed & Developed by CSE - Cyber Security (23-27)", -50, footerY, { align: "right" });
 
     doc.end();
   } catch (err) {
@@ -783,6 +774,7 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
 
 
 // ✅ Get all questions
