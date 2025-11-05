@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    /* ====== Root Theme Colors ====== */
     :root {
       --primary: #0d6efd;
       --primary-dark: #004aad;
@@ -137,7 +136,6 @@
       vertical-align: middle;
     }
 
-    /* ====== Footer ====== */
     footer {
       background: var(--primary-dark);
       color: var(--text-light);
@@ -151,7 +149,6 @@
       letter-spacing: 0.3px;
     }
 
-    /* ====== Small Animations ====== */
     .fade-in {
       opacity: 0;
       animation: fadeInUp 1.2s ease forwards;
@@ -169,7 +166,6 @@
       }
     }
 
-    /* ====== Responsive ====== */
     @media (max-width: 768px) {
       .college-header h2 {
         font-size: 1.4rem;
@@ -221,17 +217,38 @@
 
   <!-- ===== Main Content ===== -->
   <main class="content fade-in">
-    <h3>Welcome to the Feedback Administration Panel</h3>
-    <p>
-      Manage all feedback-related activities in one place.<br />
-      Navigate using the menu above to allocate staff, view reports, and update questions.
-    </p>
 
-    <!-- ===== Live Count Section ===== -->
-    <div id="live-count-container">
-      <h5>📊 Live Feedback Count (Course, Branch, Year, Section)</h5>
-      <div id="liveCountTable" class="mt-3">
-        <p style="color:gray;">Fetching live data...</p>
+    <!-- ===== Login Section ===== -->
+    <div id="loginSection">
+      <h3>Admin Login</h3>
+      <p>Please enter your credentials to access the Feedback Admin Panel.</p>
+
+      <div class="mt-4" style="max-width: 350px; margin: 0 auto;">
+        <div class="mb-3">
+          <input type="text" id="userId" class="form-control" placeholder="User ID" />
+        </div>
+        <div class="mb-3">
+          <input type="password" id="password" class="form-control" placeholder="Password" />
+        </div>
+        <button class="btn btn-primary w-100" onclick="loginAdmin()">Login</button>
+        <p id="loginMessage" class="mt-3 text-danger" style="display:none;"></p>
+      </div>
+    </div>
+
+    <!-- ===== Admin Dashboard Section ===== -->
+    <div id="adminDashboard" style="display:none;">
+      <h3>Welcome to the Feedback Administration Panel</h3>
+      <p>
+        Manage all feedback-related activities in one place.<br />
+        Navigate using the menu above to allocate staff, view reports, and update questions.
+      </p>
+
+      <!-- ===== Live Count Section ===== -->
+      <div id="live-count-container">
+        <h5>📊 Live Feedback Count (Course, Branch, Year, Section)</h5>
+        <div id="liveCountTable" class="mt-3">
+          <p style="color:gray;">Fetching live data...</p>
+        </div>
       </div>
     </div>
   </main>
@@ -244,6 +261,40 @@
   <!-- ===== Scripts ===== -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    async function loginAdmin() {
+      const userId = document.getElementById("userId").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const msg = document.getElementById("loginMessage");
+
+      msg.style.display = "none";
+
+      try {
+        const res = await fetch("/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, password })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem("feedbackAdminLoggedIn", "true");
+          document.getElementById("loginSection").style.display = "none";
+          document.getElementById("adminDashboard").style.display = "block";
+
+          fetchLiveFeedbackCount();
+          setInterval(fetchLiveFeedbackCount, 5000);
+        } else {
+          msg.innerText = "❌ Invalid User ID or Password";
+          msg.style.display = "block";
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        msg.innerText = "⚠️ Server error, please try again later.";
+        msg.style.display = "block";
+      }
+    }
+
     async function fetchLiveFeedbackCount() {
       try {
         const res = await fetch("/admin/live-feedback-count");
@@ -292,11 +343,14 @@
       }
     }
 
-    // Fetch immediately on load
-    fetchLiveFeedbackCount();
-
-    // Refresh every 5 seconds automatically
-    setInterval(fetchLiveFeedbackCount, 5000);
+    window.onload = () => {
+      if (localStorage.getItem("feedbackAdminLoggedIn") === "true") {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("adminDashboard").style.display = "block";
+        fetchLiveFeedbackCount();
+        setInterval(fetchLiveFeedbackCount, 5000);
+      }
+    };
   </script>
 </body>
 
