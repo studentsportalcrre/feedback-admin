@@ -535,7 +535,7 @@ app.get("/admin/get-subject-names", async (req, res) => {
 
 // ============================================
 // 📘 OFFICIAL SUBJECT-WISE FEEDBACK REPORT
-// (Professional layout + metadata order update)
+// (Final Unified Grading Logic + Professional Layout)
 // ============================================
 app.get("/admin/download-feedback-subject-report", async (req, res) => {
   const { subname, course, branch, year, semester, section } = req.query;
@@ -613,11 +613,16 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     const overallAvg =
       questionData.reduce((sum, q) => sum + parseFloat(q.avgScore), 0) / questionData.length;
     const overallPercentage = ((overallAvg / 4) * 100).toFixed(2);
-    const overallGrade =
-      overallPercentage >= 90 ? "Excellent" :
-      overallPercentage >= 80 ? "Very Good" :
-      overallPercentage >= 70 ? "Good" :
-      overallPercentage >= 60 ? "Average" : "Needs Improvement";
+
+    // ✅ Unified Grade Logic (same as Branch-Wise)
+    const avgToGrade = (avg) => {
+      if (avg >= 3.5 && avg <= 4.0) return "Excellent";
+      if (avg >= 2.5) return "Very Good";
+      if (avg >= 1.5) return "Good";
+      if (avg >= 1.0) return "Average";
+      return "Needs Improvement";
+    };
+    const overallGrade = avgToGrade(overallAvg);
 
     // =====================================================
     // 📄 PDF GENERATION
@@ -774,8 +779,6 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
-
 
 // ✅ Get all questions
 app.get("/admin/questions", (req, res) => {
