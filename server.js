@@ -235,13 +235,13 @@ app.get("/admin/download-feedback-branch-report", async (req, res) => {
     // ---------------- Helper ----------------
 // ✅ Unified Grade Logic (Matching the Grade Scale Table Exactly)
 const avgToGrade = (avg) => {
-  if (avg >= 3.50 && avg <= 4.00) return "Excellent";
-  else if (avg >= 2.50 && avg <= 3.49) return "Very Good";
-  else if (avg >= 1.50 && avg <= 2.49) return "Good";
-  else if (avg >= 1.00 && avg <= 1.49) return "Average";
+  const rounded = parseFloat(avg.toFixed(2));
+  if (rounded >= 3.50 && rounded <= 4.00) return "Excellent";
+  else if (rounded >= 2.50 && rounded <= 3.49) return "Very Good";
+  else if (rounded >= 1.50 && rounded <= 2.49) return "Good";
+  else if (rounded >= 1.00 && rounded <= 1.49) return "Average";
   else return "Needs Improvement";
 };
-
 
     // ---------------- Group Data ----------------
     const grouped = {};
@@ -618,12 +618,14 @@ app.get("/admin/download-feedback-subject-report", async (req, res) => {
 
 // ✅ Unified Grade Logic (Matching the Grade Scale Table Exactly)
 const avgToGrade = (avg) => {
-  if (avg >= 3.50 && avg <= 4.00) return "Excellent";
-  else if (avg >= 2.50 && avg <= 3.49) return "Very Good";
-  else if (avg >= 1.50 && avg <= 2.49) return "Good";
-  else if (avg >= 1.00 && avg <= 1.49) return "Average";
+  const rounded = parseFloat(avg.toFixed(2));
+  if (rounded >= 3.50 && rounded <= 4.00) return "Excellent";
+  else if (rounded >= 2.50 && rounded <= 3.49) return "Very Good";
+  else if (rounded >= 1.50 && rounded <= 2.49) return "Good";
+  else if (rounded >= 1.00 && rounded <= 1.49) return "Average";
   else return "Needs Improvement";
 };
+
     const overallGrade = avgToGrade(overallAvg);
 
     // =====================================================
