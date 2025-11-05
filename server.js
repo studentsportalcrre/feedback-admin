@@ -861,6 +861,30 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "adminpanel.html"));
 });
 
+// ================================================
+// 📊 Live Feedback Count (Branch, Course, Year, Section wise)
+// ================================================
+app.get("/admin/live-feedback-count", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        course,
+        branch,
+        year,
+        section,
+        COUNT(*) AS total_feedbacks
+      FROM feedback_responses
+      GROUP BY course, branch, year, section
+      ORDER BY course, branch, year, section
+    `);
+
+    res.json(rows);
+  } catch (error) {
+    console.error("❌ Error fetching live feedback count:", error);
+    res.status(500).json({ error: "Server error while fetching live count" });
+  }
+});
+
 // ===============================
 // ✅ Start Server
 // ===============================
