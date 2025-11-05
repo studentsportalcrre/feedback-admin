@@ -863,35 +863,33 @@ app.get("/", (req, res) => {
 
 // ================================================
 // 📊 Live Feedback Count (Branch, Course, Year, Section wise)
+// Works with normal mysql2 (non-promise)
 // ================================================
-app.get("/admin/live-feedback-count", async (req, res) => {
-  try {
-    const [rows] = await pool.query(`
-      SELECT 
-        course,
-        branch,
-        year,
-        section,
-        COUNT(*) AS total_feedbacks
-      FROM feedback_responses
-      GROUP BY course, branch, year, section
-      ORDER BY course, branch, year, section
-    `);
+app.get("/admin/live-feedback-count", (req, res) => {
+  const sql = `
+    SELECT 
+      course,
+      branch,
+      year,
+      section,
+      COUNT(*) AS total_feedbacks
+    FROM feedback_responses
+    GROUP BY course, branch, year, section
+    ORDER BY course, branch, year, section
+  `;
 
-    if (!rows || rows.length === 0) {
-      return res.json([]); // always send array
+  pool.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ Error fetching live feedback count:", err);
+      return res.status(500).json({
+        error: "Database error while fetching live feedback count",
+        details: err.message,
+      });
     }
 
-    res.json(rows);
-  } catch (error) {
-    console.error("❌ Error fetching live feedback count:", error.message);
-    res.status(500).json({
-      error: "Database error while fetching live feedback count",
-      details: error.message,
-    });
-  }
+    res.json(results);
+  });
 });
-
 
 // ===============================
 // ✅ Start Server
