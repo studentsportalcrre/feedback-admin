@@ -862,8 +862,8 @@ app.get("/", (req, res) => {
 });
 
 // ================================================
-// 📊 Live Feedback Count (Branch, Course, Year, Section wise)
-// Works with normal mysql2 (non-promise)
+// 📊 Live Feedback Count (Unique Students per Branch, Course, Year, Section)
+// Works with mysql2 (non-promise)
 // ================================================
 app.get("/admin/live-feedback-count", (req, res) => {
   const sql = `
@@ -872,7 +872,7 @@ app.get("/admin/live-feedback-count", (req, res) => {
       branch,
       year,
       section,
-      COUNT(*) AS total_feedbacks
+      COUNT(DISTINCT reg_no) AS total_feedbacks
     FROM feedback_responses
     GROUP BY course, branch, year, section
     ORDER BY course, branch, year, section
