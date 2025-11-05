@@ -878,12 +878,20 @@ app.get("/admin/live-feedback-count", async (req, res) => {
       ORDER BY course, branch, year, section
     `);
 
+    if (!rows || rows.length === 0) {
+      return res.json([]); // always send array
+    }
+
     res.json(rows);
   } catch (error) {
-    console.error("❌ Error fetching live feedback count:", error);
-    res.status(500).json({ error: "Server error while fetching live count" });
+    console.error("❌ Error fetching live feedback count:", error.message);
+    res.status(500).json({
+      error: "Database error while fetching live feedback count",
+      details: error.message,
+    });
   }
 });
+
 
 // ===============================
 // ✅ Start Server
