@@ -897,16 +897,16 @@ app.get("/admin/live-feedback-count", (req, res) => {
 app.post("/admin/login", (req, res) => {
   const { userId, password } = req.body;
 
-  // Hardcoded admin credentials
   const ADMIN_ID = "feedbackadmin";
   const ADMIN_PASS = "crrengg112233";
 
   if (userId === ADMIN_ID && password === ADMIN_PASS) {
-    res.json({ success: true, message: "Login successful!" });
+    res.json({ success: true, message: "Login successful" });
   } else {
     res.status(401).json({ success: false, message: "Invalid credentials" });
   }
 });
+
 
 // ===============================
 // ✅ Start Server
