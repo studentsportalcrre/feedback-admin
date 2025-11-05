@@ -233,13 +233,15 @@ app.get("/admin/download-feedback-branch-report", async (req, res) => {
     }
 
     // ---------------- Helper ----------------
-    const avgToGrade = (avg) => {
-      if (avg >= 3.5 && avg <= 4.0) return "Excellent";
-      if (avg >= 2.5) return "Very Good";
-      if (avg >= 1.5) return "Good";
-      if (avg >= 1.0) return "Average";
-      return "Needs Improvement";
-    };
+// ✅ Unified Grade Logic (Matching the Grade Scale Table Exactly)
+const avgToGrade = (avg) => {
+  if (avg >= 3.50 && avg <= 4.00) return "Excellent";
+  else if (avg >= 2.50 && avg <= 3.49) return "Very Good";
+  else if (avg >= 1.50 && avg <= 2.49) return "Good";
+  else if (avg >= 1.00 && avg <= 1.49) return "Average";
+  else return "Needs Improvement";
+};
+
 
     // ---------------- Group Data ----------------
     const grouped = {};
